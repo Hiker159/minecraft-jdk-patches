@@ -1,0 +1,29 @@
+--- a/third_party/glslang/glslang/Include/InfoSink.h
++++ b/third_party/glslang/glslang/Include/InfoSink.h
+@@ -36,7 +36,7 @@
+ #define _INFOSINK_INCLUDED_
+ 
+ #include "../Include/Common.h"
+-#if __has_include(<filesystem>)
++#if __has_include(<filesystem>) && !defined(GLSLANG_LEGACY_MACOS)
+ #include <filesystem>
+ #endif
+ #include <cmath>
+@@ -107,7 +107,7 @@
+         }
+ 
+         if(loc.getFilename() == nullptr && shaderFileName != nullptr && absolute) {
+-        #if defined(__cpp_lib_filesystem)
++        #if defined(__cpp_lib_filesystem) && !defined(GLSLANG_LEGACY_MACOS)
+             append(std::filesystem::absolute(shaderFileName).string());
+         #else
+             append(shaderFileName);
+@@ -115,7 +115,7 @@
+         } else {
+             std::string location = loc.getStringNameOrNum(false);
+             if (absolute) {
+-        #if defined(__cpp_lib_filesystem)
++        #if defined(__cpp_lib_filesystem) && !defined(GLSLANG_LEGACY_MACOS)
+                 append(std::filesystem::absolute(location).string());
+         #else
+                 append(location);
