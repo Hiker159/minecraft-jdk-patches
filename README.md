@@ -3,7 +3,7 @@
 Native library replacements and launcher settings for running Minecraft Java
 Edition on unsupported versions of Mac OS X, alongside the jdk-macos-legacy Java ports.
 For Java downloads, installation, and source builds, see the
-Java 21, 22, and 25 repository (published separately).
+Java JDK 25 repository (published separately).
 
 These packages address game libraries that require newer macOS APIs even after
 Java itself starts successfully. They are experimental compatibility builds,
@@ -37,7 +37,7 @@ This is specifically targeted towards Minecraft 1.21.11 and greater. Older versi
 | OpenAL Soft 1.23.1 | `openal-soft-1.23.1-mavericks-experimental.zip` | Uses an audio-library baseline compatible with the older C++ runtime |
 | shaderc 2026.3 | `shaderc-2026.3-mavericks-experimental.zip` | Removes unavailable Darwin stack-check and C++ filesystem dependencies |
 
-Checksums are in [SHA256SUMS](SHA256SUMS). These replacements were
+Checksums are in [SHA256](SHA256). These replacements were
 prepared for the Minecraft 26.3 / LWJGL 3.4.3 setup inspected during this project.
 Minecraft 26.1+ need these patches for the game to run.
 Minecraft 1.21.11 needs only a JVM argument to prevent multiplayer from crashing the game
@@ -131,15 +131,4 @@ guides retain the historical diagnosis from before the latest successful test.
 
 ## Licenses and attribution
 
-Each native library retains its upstream license and copyright notices. Preserve
-the included licenses, source archives, and source/build information when
-redistributing packages, and follow each component's terms. See the individual
-packages and guides for details. Minecraft and its assets are not redistributed
-by these patches. This project is not affiliated with Mojang or Microsoft.
-
-## Repository preparation
-
-See [PUBLISHING.md](PUBLISHING.md) for repository setup and release assets, and
-[ATTRIBUTION.md](ATTRIBUTION.md) for provenance. This source tree contains patches
-and build recipes; upstream source trees and compiled downloads are not committed.
-Download the named archives from this repository’s Releases page once published.
+This project is licensed under the GPL v2 license. For more information, see the attached license.
