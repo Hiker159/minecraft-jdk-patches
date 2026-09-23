@@ -1,0 +1,232 @@
+--- a/src/joystick/apple/SDL_mfijoystick.m
++++ b/src/joystick/apple/SDL_mfijoystick.m
+@@ -94,7 +94,7 @@
+             return true;
+         }
+     } else {
+-        if ([controller.vendorName containsString:@"DUALSHOCK"]) {
++        if ((controller.vendorName != nil && [controller.vendorName rangeOfString:@"DUALSHOCK"].location != NSNotFound)) {
+             return true;
+         }
+     }
+@@ -107,7 +107,7 @@
+             return true;
+         }
+     } else {
+-        if ([controller.vendorName containsString:@"DualSense"]) {
++        if ((controller.vendorName != nil && [controller.vendorName rangeOfString:@"DualSense"].location != NSNotFound)) {
+             return true;
+         }
+     }
+@@ -120,7 +120,7 @@
+             return true;
+         }
+     } else {
+-        if ([controller.vendorName containsString:@"Xbox"]) {
++        if ((controller.vendorName != nil && [controller.vendorName rangeOfString:@"Xbox"].location != NSNotFound)) {
+             return true;
+         }
+     }
+@@ -1815,8 +1815,10 @@
+         return controller.extendedGamepad.dpad;
+     }
+ 
+-    if (controller.microGamepad) {
+-        return controller.microGamepad.dpad;
++    if (@available(macOS 10.12, iOS 9.0, tvOS 9.0, *)) {
++        if (controller.microGamepad) {
++            return controller.microGamepad.dpad;
++        }
+     }
+ 
+     return nil;
+--- a/src/tray/cocoa/SDL_tray.m
++++ b/src/tray/cocoa/SDL_tray.m
+@@ -108,9 +108,9 @@
+     [[NSApplication sharedApplication] activateIgnoringOtherApps:TRUE];
+ 
+     if (tooltip) {
+-        tray->statusItem.button.toolTip = [NSString stringWithUTF8String:tooltip];
++        tray->statusItem.toolTip = [NSString stringWithUTF8String:tooltip];
+     } else {
+-        tray->statusItem.button.toolTip = nil;
++        tray->statusItem.toolTip = nil;
+     }
+ 
+     if (icon) {
+@@ -135,7 +135,7 @@
+         [iconimg drawInRect:NSMakeRect(0, 0, 22, 22)];
+         [iconimg22 unlockFocus];
+ 
+-        tray->statusItem.button.image = iconimg22;
++        tray->statusItem.image = iconimg22;
+ 
+         SDL_DestroySurface(icon);
+     }
+@@ -152,13 +152,13 @@
+     }
+ 
+     if (!icon) {
+-        tray->statusItem.button.image = nil;
++        tray->statusItem.image = nil;
+         return;
+     }
+ 
+     icon = SDL_ConvertSurface(icon, SDL_PIXELFORMAT_RGBA32);
+     if (!icon) {
+-        tray->statusItem.button.image = nil;
++        tray->statusItem.image = nil;
+         return;
+     }
+ 
+@@ -183,7 +183,7 @@
+     [iconimg drawInRect:NSMakeRect(0, 0, 22, 22)];
+     [iconimg22 unlockFocus];
+ 
+-    tray->statusItem.button.image = iconimg22;
++    tray->statusItem.image = iconimg22;
+ 
+     SDL_DestroySurface(icon);
+ }
+@@ -195,9 +195,9 @@
+     }
+ 
+     if (tooltip) {
+-        tray->statusItem.button.toolTip = [NSString stringWithUTF8String:tooltip];
++        tray->statusItem.toolTip = [NSString stringWithUTF8String:tooltip];
+     } else {
+-        tray->statusItem.button.toolTip = nil;
++        tray->statusItem.toolTip = nil;
+     }
+ }
+ 
+--- a/src/video/cocoa/SDL_cocoawindow.m
++++ b/src/video/cocoa/SDL_cocoawindow.m
+@@ -57,6 +57,31 @@
+ #ifndef NSAppKitVersionNumber10_14
+ #define NSAppKitVersionNumber10_14 1671
+ #endif
++
++/* jdk-macos-legacy: block timers without the macOS 10.12 NSTimer API. */
++@interface SDL3MavericksTimer : NSObject
+++ (void)fire:(NSTimer *)timer;
+++ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(NSTimer *))block;
+++ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(NSTimer *))block;
++@end
++@implementation SDL3MavericksTimer
+++ (void)fire:(NSTimer *)timer
++{
++    void (^block)(NSTimer *) = timer.userInfo;
++    block(timer);
++}
+++ (NSTimer *)timerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(NSTimer *))block
++{
++    return [NSTimer timerWithTimeInterval:interval target:self selector:@selector(fire:)
++                                userInfo:[block copy] repeats:repeats];
++}
+++ (NSTimer *)scheduledTimerWithTimeInterval:(NSTimeInterval)interval repeats:(BOOL)repeats block:(void (^)(NSTimer *))block
++{
++    NSTimer *timer = [self timerWithTimeInterval:interval repeats:repeats block:block];
++    [[NSRunLoop currentRunLoop] addTimer:timer forMode:NSDefaultRunLoopMode];
++    return timer;
++}
++@end
+ 
+ @implementation SDL_CocoaWindowData
+ 
+@@ -788,7 +813,7 @@
+         if (cdata) {
+             if (cdata->num_cursors > 1 && cdata->frames[cdata->current_frame].duration && !cdata->frameTimer) {
+                 const NSTimeInterval interval = cdata->frames[cdata->current_frame].duration * 0.001;
+-                cdata->frameTimer = [NSTimer timerWithTimeInterval:interval
++                cdata->frameTimer = [SDL3MavericksTimer timerWithTimeInterval:interval
+                                                            repeats:NO
+                                                              block:^(NSTimer *timer) {
+                                                                cdata->frameTimer = nil;
+@@ -1142,7 +1167,7 @@
+ {
+     // We'll try to maintain 60 FPS during live resizing
+     const NSTimeInterval interval = 1.0 / 60.0;
+-    liveResizeTimer = [NSTimer scheduledTimerWithTimeInterval:interval
++    liveResizeTimer = [SDL3MavericksTimer scheduledTimerWithTimeInterval:interval
+                                                       repeats:TRUE
+                                                         block:^(NSTimer *unusedTimer)
+     {
+@@ -2091,8 +2116,10 @@
+          * sending a window.) It will also need to use normalized window-
+          * relative coordinates via [touch locationInView:].
+          */
+-        if ([touch type] == NSTouchTypeDirect) {
+-            continue;
++        if (@available(macOS 10.12.2, *)) {
++            if ([touch type] == NSTouchTypeDirect) {
++                continue;
++            }
+         }
+ 
+         if (SDL_AddTouch(touchId, devtype, "") < 0) {
+@@ -2253,30 +2280,29 @@
+     const NSPoint mouseLocation = [NSEvent mouseLocation];
+ 
+     // Find the topmost window under the pointer and send a motion event if it is an SDL window.
+-    [NSApp enumerateWindowsWithOptions:NSWindowListOrderedFrontToBack
+-                            usingBlock:^(NSWindow *nswin, BOOL *stop) {
+-                              NSRect r = [nswin contentRectForFrameRect:[nswin frame]];
+-                              if (NSPointInRect(mouseLocation, r)) {
+-                                  SDL_VideoDevice *vid = SDL_GetVideoDevice();
+-                                  SDL_Window *sdlwindow;
+-                                  for (sdlwindow = vid->windows; sdlwindow; sdlwindow = sdlwindow->next) {
+-                                      if (nswin == ((__bridge SDL_CocoaWindowData *)sdlwindow->internal).nswindow) {
+-                                          break;
+-                                      }
+-                                  }
+-                                  *stop = YES;
+-                                  if (sdlwindow) {
+-                                      SDL_CocoaVideoData *videodata = (__bridge SDL_CocoaVideoData *)vid->internal;
+-                                      int wx, wy;
+-                                      SDL_RelativeToGlobalForWindow(sdlwindow, sdlwindow->x, sdlwindow->y, &wx, &wy);
+-
+-                                      // Calculate the cursor coordinates relative to the window.
+-                                      const float dx = mouseLocation.x - wx;
+-                                      const float dy = (videodata.mainDisplayHeight - mouseLocation.y) - wy;
+-                                      SDL_SendMouseMotion(0, sdlwindow, SDL_GLOBAL_MOUSE_ID, false, dx, dy);
+-                                  }
+-                              }
+-                            }];
++    for (NSWindow *nswin in [NSApp orderedWindows]) {
++        NSRect r = [nswin contentRectForFrameRect:[nswin frame]];
++        if (NSPointInRect(mouseLocation, r)) {
++            SDL_VideoDevice *vid = SDL_GetVideoDevice();
++            SDL_Window *sdlwindow;
++            for (sdlwindow = vid->windows; sdlwindow; sdlwindow = sdlwindow->next) {
++                if (nswin == ((__bridge SDL_CocoaWindowData *)sdlwindow->internal).nswindow) {
++                    break;
++                }
++            }
++            if (sdlwindow) {
++                SDL_CocoaVideoData *videodata = (__bridge SDL_CocoaVideoData *)vid->internal;
++                int wx, wy;
++                SDL_RelativeToGlobalForWindow(sdlwindow, sdlwindow->x, sdlwindow->y, &wx, &wy);
++
++                // Calculate the cursor coordinates relative to the window.
++                const float dx = mouseLocation.x - wx;
++                const float dy = (videodata.mainDisplayHeight - mouseLocation.y) - wy;
++                SDL_SendMouseMotion(0, sdlwindow, SDL_GLOBAL_MOUSE_ID, false, dx, dy);
++            }
++            break;
++        }
++    }
+ }
+ 
+ static bool SetupWindowData(SDL_VideoDevice *_this, SDL_Window *window, NSWindow *nswindow, NSView *nsview)
+@@ -2496,7 +2522,9 @@
+ 
+             [nswindow setColorSpace:[NSColorSpace sRGBColorSpace]];
+ 
+-            [nswindow setTabbingMode:NSWindowTabbingModeDisallowed];
++            if (@available(macOS 10.12, *)) {
++                [nswindow setTabbingMode:NSWindowTabbingModeDisallowed];
++            }
+ 
+             // we put fullscreen desktop windows in their own Space, without a toggle button or menubar, later
+             if ((window->flags & SDL_WINDOW_RESIZABLE) && videodata.allow_spaces) {
