@@ -83,8 +83,7 @@ the four replacement libraries above:
 
 Restart Minecraft, then test server-list pings, joining a server, and opening a
 world to LAN with another client connecting. No networking replacement library
-or mod is needed for this fallback. See the
-[multiplayer diagnosis and verification](docs/MULTIPLAYER-MAVERICKS.md).
+or mod is needed for this fallback.
 
 ## Troubleshooting
 
