@@ -43,7 +43,14 @@ Minecraft 26.1+ need these patches for the game to run.
 Minecraft 1.21.11 needs only a JVM argument to prevent multiplayer from crashing the game
 Minecraft 1.21.10 and earlier are unaffected, and these patches are not necessary.
 
-## Install the patches for Minecraft 26.3
+## Installing the patches
+
+1. Download the latest "Minecraft.Libraries.for.OS.X.pkg" from the Releases section. Open and run the .pkg installer.
+2. The installer once it installs the libraries will warn you to add the flags to your minecraft launcher application.
+   Make sure to append each of the six JVM Arguments to the end of the line, do not delete it. Make sure you also leave a space in between each line.
+3. Make sure to point the minecraft launcher to the Java 25 JDK that is on your system in your minecraft launcher's settings.
+
+## Install the patches for Minecraft 26.1 Manually
 
 1. Close Minecraft and select the modified Java 25 bundle in
    the launcher's Java executable setting.
@@ -55,12 +62,13 @@ Minecraft 1.21.10 and earlier are unaffected, and these patches are not necessar
 
 ```text
 -Dorg.lwjgl.system.allocator=system
--Dorg.lwjgl.sdl.libname=/Users/YOUR_USERNAME/SDL-Mavericks/libSDL3.dylib
--Dorg.lwjgl.freetype.libname=/Users/YOUR_USERNAME/FreeType-Mavericks/libfreetype.dylib
--Dorg.lwjgl.openal.libname=/Users/YOUR_USERNAME/OpenAL-Mavericks/libopenal.dylib
--Dorg.lwjgl.shaderc.libname=/Users/YOUR_USERNAME/Shaderc-Mavericks/libshaderc.dylib
+-Dorg.lwjgl.sdl.libname=/PATH_TO_/libSDL3.dylib
+-Dorg.lwjgl.freetype.libname=/PATH_TO_/libfreetype.dylib
+-Dorg.lwjgl.openal.libname=/PATH_TO_/libopenal.dylib
+-Dorg.lwjgl.shaderc.libname=/PATH_TO_/libshaderc.dylib
 -Dio.netty.transport.noNative=true
 ```
+Make sure to replace "PATH_TO_" with the actual directory path to the library.
 
 The allocator setting bypasses the bundled jemalloc dependency on
 `_clock_gettime_nsec_np`. The four library settings select the replacement files.
