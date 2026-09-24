@@ -16,9 +16,7 @@ This is specifically targeted towards Minecraft 1.21.11 and greater. Older versi
 - An Intel Mac running Mavericks or greater.
 - A Minecraft launcher that already runs on Mavericks and allows a custom Java executable
   and JVM arguments.
-- The appropriate Java runtime: Java 21 for releases requiring Java 21, or the
-  Java 25 port for the tested Minecraft 26.3. Java 22 has also been reported
-  working, but compatibility with individual mods and launchers may differ.
+- The appropriate Java runtime: Java 25 should cover all versions of Minecraft affected by the change of libraries. The JDK is available from my repo here: [Java JDKs for Legacy OS X](https://github.com/Hiker159/jdk-macos-legacy) Compatibility with individual mods and launchers may differ.
 
 ## What versions of the game?
 | Version | Needs Patches | What Patch |
